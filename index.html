@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APAC Team Millionaire Quiz</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle at center, #0B192C 0%, #030811 100%);
+            color: #FFFFFF;
+            min-height: 100vh;
+        }
+
+        .hexagon-btn {
+            position: relative;
+            background: linear-gradient(180deg, #102A43 0%, #001220 100%);
+            border: 2px solid #38BDF8;
+            clip-path: polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .hexagon-btn:hover:not(:disabled) {
+            background: linear-gradient(180deg, #1E3A8A 0%, #0F172A 100%);
+            border-color: #F59E0B;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .hexagon-btn.selected {
+            background: linear-gradient(180deg, #D97706 0%, #78350F 100%) !important;
+            border-color: #FBBF24 !important;
+            animation: pulse-orange 1.5s infinite;
+        }
+
+        .hexagon-btn.correct {
+            background: linear-gradient(180deg, #059669 0%, #064E3B 100%) !important;
+            border-color: #34D399 !important;
+            animation: glow-green 1s ease-in-out;
+        }
+
+        .hexagon-btn.wrong {
+            background: linear-gradient(180deg, #DC2626 0%, #7F1D1D 100%) !important;
+            border-color: #F87171 !important;
+        }
+
+        @keyframes pulse-orange {
+            0%, 100% { border-color: #FBBF24; box-shadow: 0 0 10px #FBBF24; }
+            50% { border-color: #FFF; box-shadow: 0 0 20px #FBBF24; }
+        }
+
+        @keyframes glow-green {
+            0% { box-shadow: 0 0 5px #34D399; }
+            50% { box-shadow: 0 0 25px #34D399; }
+            100% { box-shadow: 0 0 5px #34D399; }
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 4px;
+        }
+
+        .trophy-bounce {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between p-2 md:p-6 overflow-x-hidden">
+
+    <header class="w-full max-w-7xl mx-auto flex flex-wrap justify-between items-center py-2 px-4 glass-card rounded-xl mb-4 border-b-2 border-amber-500">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-400 font-bold">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100">
+                    APAC MILLIONAIRE
+                </h1>
+                <p id="room-status" class="text-xs text-amber-400 font-semibold">Connecting Live...</p>
+            </div>
+        </div>
+
+        <div id="user-info-bar" class="hidden flex items-center gap-4 mt-2 sm:mt-0">
+            <span id="player-tag" class="text-sm font-semibold bg-sky-950 border border-sky-600/50 px-3 py-1 rounded-full text-sky-200">
+                <i class="fa-solid fa-user mr-1 text-sky-400"></i> <span id="display-name">Player</span>
+            </span>
+            <button id="host-toggle-btn" class="hidden text-xs bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-3 py-1 rounded-full transition">
+                Switch Role
+            </button>
+        </div>
+    </header>
+
+    <div id="login-screen" class="max-w-md w-full mx-auto my-auto glass-card p-8 rounded-2xl text-center shadow-2xl">
+        <div class="w-20 h-20 bg-gradient-to-tr from-amber-500 to-amber-300 rounded-full mx-auto mb-6 flex items-center justify-center text-slate-950 text-3xl font-black shadow-lg shadow-amber-500/20">
+            <i class="fa-solid fa-question"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold mb-2 text-white">Join Quiz Game</h2>
+        <p class="text-slate-400 text-sm mb-6">Enter your name to join your APAC teammates live!</p>
+
+        <form id="join-form" class="space-y-4">
+            <div>
+                <input type="text" id="username-input" required placeholder="Enter Your Name..." 
+                    class="w-full bg-slate-900 border border-sky-500/30 rounded-xl px-4 py-3 text-center text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition font-medium">
+            </div>
+
+            <div class="pt-2 space-y-2">
+                <button type="submit" data-role="player" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3 px-6 rounded-xl transition transform active:scale-95 shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-gamepad"></i> Join as Player
+                </button>
+                <button type="button" id="join-host-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 px-6 rounded-xl border border-slate-700 text-sm transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-crown text-amber-400"></i> <span id="host-btn-label">Host/Present Game</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <main id="game-screen" class="hidden w-full max-w-7xl mx-auto flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        <div class="lg:col-span-3 flex flex-col gap-4">
+            
+            <!-- Host Action Controls Bar -->
+            <div id="host-controls" class="hidden glass-card p-4 rounded-xl border-2 border-amber-500/60 bg-amber-950/20">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded text-xs uppercase tracking-wider">Host Control</span>
+                        <span id="host-q-status" class="text-xs text-amber-200">Lobby Waiting Room</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="start-game-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition shadow-md flex items-center gap-1">
+                            <i class="fa-solid fa-play"></i> Start Quiz Game
+                        </button>
+                        <button id="edit-questions-btn" class="bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-500/40 text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit Questions
+                        </button>
+                        <button id="reset-game-btn" class="bg-red-900/60 hover:bg-red-800 text-red-200 border border-red-500/40 text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Quiz
+                        </button>
+                        <button id="prev-q-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">
+                            <i class="fa-solid fa-chevron-left"></i> Prev Q
+                        </button>
+                        <button id="next-q-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition">
+                            Next Q <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button id="reveal-answer-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-1.5 rounded-lg transition shadow-md shadow-amber-500/20 flex items-center gap-1">
+                            <i class="fa-solid fa-eye"></i> Reveal Correct Answer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="lobby-card" class="glass-card p-8 rounded-2xl text-center space-y-6 my-auto py-12">
+                <div class="w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 text-4xl mx-auto trophy-bounce">
+                    <i class="fa-solid fa-users-line"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-black text-amber-300 uppercase tracking-wide">APAC Millionaire Lobby</h2>
+                    <p id="lobby-subtitle" class="text-slate-300 text-sm mt-2">
+                        Waiting for all team members to join before starting...
+                    </p>
+                </div>
+                
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-sky-500/30 max-w-sm mx-auto flex items-center justify-between">
+                    <span class="text-xs text-sky-300 font-bold uppercase tracking-wider">Players Joined:</span>
+                    <span id="lobby-player-count" class="text-xl font-black text-amber-400">0</span>
+                </div>
+
+                <div id="host-lobby-prompt" class="hidden">
+                    <p class="text-xs text-amber-400 font-medium mb-3">Once everyone is ready, click below to launch the quiz!</p>
+                    <button id="lobby-start-btn" class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-black py-3 px-8 rounded-xl shadow-lg shadow-emerald-500/30 transition transform active:scale-95 text-lg">
+                        <i class="fa-solid fa-rocket mr-2"></i> START GAME NOW
+                    </button>
+                </div>
+            </div>
+
+            <div id="active-quiz-view" class="hidden flex flex-col gap-4">
+                <!-- Timer Display Bar -->
+                <div class="flex justify-between items-center bg-slate-900/80 border border-amber-500/30 px-4 py-2 rounded-xl text-xs font-bold text-amber-300">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-clock text-amber-400 text-lg animate-pulse"></i>
+                        <span>TIME REMAINING:</span>
+                    </div>
+                    <div id="countdown-timer" class="text-xl font-black font-mono text-amber-400">30s</div>
+                </div>
+
+                <!-- Lifelines -->
+                <div class="flex justify-center items-center gap-4 my-1">
+                    <button id="lifeline-phone" class="lifeline-btn w-14 h-10 rounded-full border-2 border-sky-400/80 bg-gradient-to-b from-blue-900 to-sky-950 flex items-center justify-center text-sky-300 shadow-lg text-base hover:scale-105 transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100" title="Ask Phone Friend">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                    </button>
+                    <button id="lifeline-audience" class="lifeline-btn w-14 h-10 rounded-full border-2 border-sky-400/80 bg-gradient-to-b from-blue-900 to-sky-950 flex items-center justify-center text-sky-300 shadow-lg text-base hover:scale-105 transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100" title="Ask the Audience">
+                        <i class="fa-solid fa-users"></i>
+                    </button>
+                    <button id="lifeline-5050" class="lifeline-btn w-14 h-10 rounded-full border-2 border-sky-400/80 bg-gradient-to-b from-blue-900 to-sky-950 flex items-center justify-center text-sky-300 font-extrabold text-xs shadow-lg hover:scale-105 transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100" title="50:50">
+                        50:50
+                    </button>
+                </div>
+
+                <!-- Question Display -->
+                <div class="hexagon-btn p-6 md:p-8 text-center my-2 shadow-2xl flex items-center justify-center min-h-[120px] border-amber-400/80">
+                    <h3 id="question-text" class="text-lg md:text-2xl font-bold text-white tracking-wide leading-relaxed">
+                        Loading question...
+                    </h3>
+                </div>
+
+                <!-- Answer Options -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <button id="opt-A" data-option="A" class="option-btn hexagon-btn p-4 text-left font-semibold text-sm md:text-base flex items-center gap-3">
+                        <span class="text-amber-400 font-extrabold text-lg">A:</span>
+                        <span class="opt-text text-slate-200">Option A</span>
+                    </button>
+                    <button id="opt-B" data-option="B" class="option-btn hexagon-btn p-4 text-left font-semibold text-sm md:text-base flex items-center gap-3">
+                        <span class="text-amber-400 font-extrabold text-lg">B:</span>
+                        <span class="opt-text text-slate-200">Option B</span>
+                    </button>
+                    <button id="opt-C" data-option="C" class="option-btn hexagon-btn p-4 text-left font-semibold text-sm md:text-base flex items-center gap-3">
+                        <span class="text-amber-400 font-extrabold text-lg">C:</span>
+                        <span class="opt-text text-slate-200">Option C</span>
+                    </button>
+                    <button id="opt-D" data-option="D" class="option-btn hexagon-btn p-4 text-left font-semibold text-sm md:text-base flex items-center gap-3">
+                        <span class="text-amber-400 font-extrabold text-lg">D:</span>
+                        <span class="opt-text text-slate-200">Option D</span>
+                    </button>
+                </div>
+
+                <!-- Lock in button -->
+                <div class="flex justify-center mt-4">
+                    <button id="lock-in-btn" disabled class="bg-gradient-to-r from-amber-500 to-amber-600 disabled:opacity-40 disabled:cursor-not-allowed hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 px-10 rounded-xl transition transform active:scale-95 shadow-xl text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-lock"></i> LOCK IN ANSWER
+                    </button>
+                </div>
+
+                <!-- Live Audience Tally -->
+                <div id="tally-box" class="glass-card p-4 rounded-xl mt-4">
+                    <h4 class="text-xs uppercase font-bold text-sky-400 tracking-wider mb-2 flex items-center justify-between">
+                        <span><i class="fa-solid fa-chart-column mr-1"></i> Live Team Selections</span>
+                        <span id="locked-count-text" class="text-amber-300 font-normal">0/0 Locked In</span>
+                    </h4>
+                    <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                        <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                            <span class="font-bold text-amber-400">A</span>
+                            <div id="tally-A" class="text-lg font-black text-white">0</div>
+                        </div>
+                        <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                            <span class="font-bold text-amber-400">B</span>
+                            <div id="tally-B" class="text-lg font-black text-white">0</div>
+                        </div>
+                        <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                            <span class="font-bold text-amber-400">C</span>
+                            <div id="tally-C" class="text-lg font-black text-white">0</div>
+                        </div>
+                        <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                            <span class="font-bold text-amber-400">D</span>
+                            <div id="tally-D" class="text-lg font-black text-white">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="winner-screen" class="hidden glass-card p-8 rounded-2xl text-center space-y-6 my-auto border-2 border-amber-400 shadow-2xl">
+                <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-200 border-4 border-amber-300 flex items-center justify-center text-slate-950 text-5xl mx-auto trophy-bounce shadow-xl shadow-amber-500/30">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 uppercase tracking-widest">
+                        QUIZ CHAMPION!
+                    </h2>
+                    <p class="text-slate-300 text-sm mt-1">We have an official APAC Millionaire Winner!</p>
+                </div>
+
+                <div class="bg-gradient-to-b from-amber-950/60 to-slate-900/80 p-6 rounded-2xl border border-amber-500/50 max-w-md mx-auto space-y-3">
+                    <p class="text-xs text-amber-400 uppercase tracking-widest font-bold">1st Place Winner</p>
+                    <h3 id="winner-name" class="text-3xl font-black text-white tracking-wide">Player Name</h3>
+                    <div class="pt-2">
+                        <span class="text-xs text-slate-400 uppercase">Prize Cash Won</span>
+                        <div id="winner-prize" class="text-2xl md:text-3xl font-black text-emerald-400 font-mono tracking-tight">$1,000,000 Monopoly Money</div>
+                    </div>
+                </div>
+
+                <div class="max-w-md mx-auto pt-4">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Final Leaderboard Podium</h4>
+                    <div id="winner-podium-list" class="space-y-2"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <div class="glass-card p-4 rounded-xl border-l-4 border-amber-400">
+                <h3 class="text-sm font-bold text-amber-400 tracking-wider uppercase mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i> Question Ladder
+                </h3>
+                <div id="money-ladder" class="space-y-1 text-xs font-bold font-mono"></div>
+            </div>
+
+            <div class="glass-card p-4 rounded-xl flex-1 flex flex-col">
+                <h3 class="text-sm font-bold text-sky-400 tracking-wider uppercase mb-3 flex items-center justify-between">
+                    <span><i class="fa-solid fa-users text-amber-400 mr-1"></i> Live Scoreboard</span>
+                    <span id="player-count" class="text-xs font-normal text-slate-400">0 Joined</span>
+                </h3>
+                <div id="leaderboard-list" class="space-y-2 overflow-y-auto max-h-60 lg:max-h-80 pr-1">
+                    <p class="text-xs text-slate-500 italic text-center py-4">Waiting for team members...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-8 text-center text-xs text-slate-500 py-2">
+        APAC Interactive Team Quiz &bull; GitHub Pages Web App
+    </footer>
+
+    <!-- Lifeline Friend Modal -->
+    <div id="lifeline-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full rounded-2xl p-6 border-amber-500/50 shadow-2xl text-center space-y-4">
+            <div class="w-14 h-14 rounded-full bg-sky-500/20 border border-sky-400 flex items-center justify-center text-sky-400 text-2xl mx-auto">
+                <i class="fa-solid fa-phone-volume animate-pulse"></i>
+            </div>
+            <h3 id="lifeline-modal-title" class="text-lg font-bold text-amber-400">Phone a Friend</h3>
+            <p id="lifeline-modal-body" class="text-sm text-slate-200 leading-relaxed bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                Contacting your APAC teammate for advice...
+            </p>
+            <button id="close-lifeline-modal" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-6 py-2.5 rounded-xl transition shadow-lg">
+                Got It!
+            </button>
+        </div>
+    </div>
+
+    <div id="questions-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-card max-w-2xl w-full max-h-[85vh] flex flex-col rounded-2xl p-6 border-amber-500/50 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check"></i> Custom Quiz Questions Manager
+                </h3>
+                <button id="close-modal-btn" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            
+            <div id="modal-questions-list" class="flex-1 overflow-y-auto space-y-4 pr-2 my-2"></div>
+
+            <div class="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-slate-700">
+                <button id="add-question-btn" class="bg-slate-800 hover:bg-slate-700 text-sky-400 border border-sky-500/40 text-xs px-4 py-2 rounded-xl transition flex items-center gap-1 font-semibold">
+                    <i class="fa-solid fa-plus"></i> Add Question
+                </button>
+                <div class="flex gap-2">
+                    <button id="cancel-questions-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2 rounded-xl transition">
+                        Cancel
+                    </button>
+                    <button id="save-questions-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-5 py-2 rounded-xl transition shadow-lg shadow-amber-500/20">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Save All Questions
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCI2LQ7K5XVuu7Nnu7waS9xqpSFl5mt75k",
+            authDomain: "apac-quiz.firebaseapp.com",
+            projectId: "apac-quiz",
+            storageBucket: "apac-quiz.firebasestorage.app",
+            messagingSenderId: "563513055714",
+            appId: "1:563513055714:web:aaa0f47e4a5348245ec1bb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const GAME_STATE_DOC = doc(db, 'game_room', 'state');
+        const QUESTIONS_DOC = doc(db, 'game_room', 'questions');
+        const PLAYERS_COLLECTION = collection(db, 'players');
+
+        const QUESTION_TIME_LIMIT = 30; // Seconds per question
+
+        let QUESTIONS = [
+            {
+                q: "Which APAC city is home to the world's highest rooftop infinity pool?",
+                options: { A: "Tokyo", B: "Singapore", C: "Sydney", D: "Hong Kong" },
+                correct: "B",
+                prize: "$100,000"
+            },
+            {
+                q: "How many time zones span across Australia during Daylight Saving Time?",
+                options: { A: "3", B: "4", C: "5", D: "6" },
+                correct: "C",
+                prize: "$250,000"
+            },
+            {
+                q: "Which nation in APAC boasts the longest coastline in the world?",
+                options: { A: "Indonesia", B: "Australia", C: "Japan", D: "Philippines" },
+                correct: "A",
+                prize: "$500,000"
+            },
+            {
+                q: "What is the official national currency of South Korea?",
+                options: { A: "Yen", B: "Yuan", C: "Ringgit", D: "Won" },
+                correct: "D",
+                prize: "$750,000"
+            },
+            {
+                q: "Which iconic landmark was opened first?",
+                options: { A: "Sydney Opera House", B: "Petronas Towers", C: "Tokyo Tower", D: "Taipei 101" },
+                correct: "C",
+                prize: "$1,000,000"
+            }
+        ];
+
+        // Unique session ID cleared when browser tab is closed
+        let userId = sessionStorage.getItem('apac_user_session');
+        if (!userId) {
+            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+            sessionStorage.setItem('apac_user_session', userId);
+        }
+
+        let playerName = "";
+        let isHost = false;
+        let selectedOption = null;
+        let gameState = { currentQuestion: 0, isRevealed: false, gameStarted: false, gameOver: false, startTime: null, isHostActive: false };
+        let playersData = {};
+        let timerInterval = null;
+
+        // Lifeline tracking for current player
+        let usedLifelines = {
+            fiftyFifty: false,
+            audience: false,
+            phone: false
+        };
+
+        // Remove active player / reset host lock on browser refresh or close
+        window.addEventListener('beforeunload', () => {
+            if (userId) {
+                if (isHost) {
+                    try {
+                        setDoc(GAME_STATE_DOC, { isHostActive: false }, { merge: true });
+                    } catch (e) {}
+                } else {
+                    try {
+                        deleteDoc(doc(db, 'players', userId));
+                    } catch (e) {}
+                }
+            }
+        });
+
+        async function initAuth() {
+            try {
+                await signInAnonymously(auth);
+                document.getElementById('room-status').innerText = "Connected Live";
+                document.getElementById('room-status').className = "text-xs text-emerald-400 font-semibold";
+            } catch (err) {
+                console.warn("Auth Notice:", err.message);
+                document.getElementById('room-status').innerText = "Connected Live";
+                document.getElementById('room-status').className = "text-xs text-emerald-400 font-semibold";
+            }
+            listenToRoomUpdates();
+            setupEventListeners();
+            startLocalTimer();
+        }
+
+        function renderLadder(currentIdx) {
+            const ladderEl = document.getElementById('money-ladder');
+            ladderEl.innerHTML = '';
+            for (let i = QUESTIONS.length - 1; i >= 0; i--) {
+                const stepNum = i + 1;
+                const isCurrent = i === currentIdx;
+                const isPassed = i < currentIdx;
+
+                let rowBg = "bg-slate-900/60 text-slate-400 border-slate-800";
+                if (isCurrent && gameState.gameStarted) rowBg = "bg-amber-500 text-slate-950 border-amber-300 font-extrabold scale-105 shadow-md";
+                else if (isPassed && gameState.gameStarted) rowBg = "bg-emerald-950/40 text-emerald-400 border-emerald-800";
+
+                ladderEl.innerHTML += `
+                    <div class="flex justify-between items-center px-3 py-1.5 rounded border ${rowBg} transition-all">
+                        <span>Q${stepNum}</span>
+                        <span>${QUESTIONS[i].prize}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function startLocalTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            const timerEl = document.getElementById('countdown-timer');
+
+            timerInterval = setInterval(() => {
+                if (!gameState.gameStarted || gameState.isRevealed || gameState.gameOver || !gameState.startTime) {
+                    timerEl.innerText = "30s";
+                    timerEl.className = "text-xl font-black font-mono text-amber-400";
+                    return;
+                }
+
+                const now = Date.now();
+                const elapsedSeconds = Math.floor((now - gameState.startTime) / 1000);
+                const remaining = Math.max(0, QUESTION_TIME_LIMIT - elapsedSeconds);
+
+                timerEl.innerText = `${remaining}s`;
+
+                if (remaining <= 5) {
+                    timerEl.className = "text-xl font-black font-mono text-red-500 animate-bounce";
+                } else if (remaining <= 10) {
+                    timerEl.className = "text-xl font-black font-mono text-orange-400";
+                } else {
+                    timerEl.className = "text-xl font-black font-mono text-amber-400";
+                }
+
+                if (remaining === 0) {
+                    const lockBtn = document.getElementById('lock-in-btn');
+                    if (!gameState.isRevealed && lockBtn) {
+                        lockBtn.disabled = true;
+                        lockBtn.innerHTML = `<i class="fa-solid fa-clock"></i> TIME'S UP!`;
+                    }
+                }
+            }, 500);
+        }
+
+        function setupEventListeners() {
+            document.getElementById('join-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                joinGame(false);
+            });
+
+            document.getElementById('join-host-btn').addEventListener('click', () => {
+                if (!gameState.isHostActive) {
+                    joinGame(true);
+                }
+            });
+
+            const startGameAction = async () => {
+                if (!isHost) return;
+                gameState.gameStarted = true;
+                gameState.gameOver = false;
+                gameState.currentQuestion = 0;
+                gameState.isRevealed = false;
+                gameState.startTime = Date.now();
+                try {
+                    await setDoc(GAME_STATE_DOC, {
+                        gameStarted: true,
+                        gameOver: false,
+                        currentQuestion: 0,
+                        isRevealed: false,
+                        startTime: gameState.startTime
+                    }, { merge: true });
+                } catch (e) {
+                    console.warn("Start game sync error:", e.message);
+                }
+            };
+
+            document.getElementById('start-game-btn').addEventListener('click', startGameAction);
+            document.getElementById('lobby-start-btn').addEventListener('click', startGameAction);
+
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (gameState.isRevealed || isHost || !gameState.gameStarted) return;
+
+                    // Check if time is up
+                    if (gameState.startTime) {
+                        const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+                        if (elapsed >= QUESTION_TIME_LIMIT) return;
+                    }
+
+                    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedOption = btn.getAttribute('data-option');
+                    document.getElementById('lock-in-btn').disabled = false;
+                });
+            });
+
+            document.getElementById('lock-in-btn').addEventListener('click', async () => {
+                if (!selectedOption || !userId) return;
+
+                if (!playersData[userId]) {
+                    playersData[userId] = { name: playerName, score: 0, answers: {} };
+                }
+                if (!playersData[userId].answers) playersData[userId].answers = {};
+                playersData[userId].answers[`q${gameState.currentQuestion}`] = selectedOption;
+
+                document.getElementById('lock-in-btn').disabled = true;
+                document.getElementById('lock-in-btn').innerHTML = `<i class="fa-solid fa-check"></i> ANSWER LOCKED`;
+
+                try {
+                    const playerDocRef = doc(db, 'players', userId);
+                    await setDoc(playerDocRef, {
+                        name: playerName,
+                        score: playersData[userId].score || 0,
+                        answers: playersData[userId].answers
+                    }, { merge: true });
+                } catch (e) {
+                    console.warn("Firestore save answer warning:", e.message);
+                }
+                renderLeaderboardAndTally();
+            });
+
+            document.getElementById('reveal-answer-btn').addEventListener('click', async () => {
+                if (!isHost) return;
+                const currentQ = QUESTIONS[gameState.currentQuestion];
+                for (const pid in playersData) {
+                    const p = playersData[pid];
+                    const playerAns = p.answers ? p.answers[`q${gameState.currentQuestion}`] : null;
+                    if (playerAns === currentQ.correct && !p[`scored_q${gameState.currentQuestion}`]) {
+                        p.score = (p.score || 0) + 100;
+                        p[`scored_q${gameState.currentQuestion}`] = true;
+                        try {
+                            const pRef = doc(db, 'players', pid);
+                            await setDoc(pRef, {
+                                score: p.score,
+                                [`scored_q${gameState.currentQuestion}`]: true
+                            }, { merge: true });
+                        } catch (e) {
+                            console.warn("Score sync warning:", e.message);
+                        }
+                    }
+                }
+
+                // Check if last question revealed
+                const isLastQuestion = gameState.currentQuestion === QUESTIONS.length - 1;
+                gameState.isRevealed = true;
+                gameState.gameOver = isLastQuestion;
+
+                try {
+                    await setDoc(GAME_STATE_DOC, { 
+                        currentQuestion: gameState.currentQuestion, 
+                        isRevealed: true,
+                        gameOver: isLastQuestion 
+                    }, { merge: true });
+                } catch (e) {
+                    console.warn("Reveal state sync warning:", e.message);
+                }
+                renderQuestionUI();
+                renderLeaderboardAndTally();
+            });
+
+            document.getElementById('next-q-btn').addEventListener('click', async () => {
+                if (!isHost) return;
+                if (gameState.currentQuestion < QUESTIONS.length - 1) {
+                    const newQIndex = gameState.currentQuestion + 1;
+                    selectedOption = null;
+                    const startTime = Date.now();
+                    try {
+                        await setDoc(GAME_STATE_DOC, {
+                            currentQuestion: newQIndex,
+                            isRevealed: false,
+                            gameOver: false,
+                            startTime: startTime
+                        }, { merge: true });
+                    } catch (e) {
+                        console.warn("Next question sync warning:", e.message);
+                    }
+                }
+            });
+
+            document.getElementById('prev-q-btn').addEventListener('click', async () => {
+                if (!isHost) return;
+                if (gameState.currentQuestion > 0) {
+                    const newQIndex = gameState.currentQuestion - 1;
+                    selectedOption = null;
+                    const startTime = Date.now();
+                    try {
+                        await setDoc(GAME_STATE_DOC, {
+                            currentQuestion: newQIndex,
+                            isRevealed: false,
+                            gameOver: false,
+                            startTime: startTime
+                        }, { merge: true });
+                    } catch (e) {
+                        console.warn("Prev question sync warning:", e.message);
+                    }
+                }
+            });
+
+            document.getElementById('edit-questions-btn').addEventListener('click', () => {
+                if (!isHost) return;
+                openQuestionsModal();
+            });
+
+            document.getElementById('close-modal-btn').addEventListener('click', closeQuestionsModal);
+            document.getElementById('cancel-questions-btn').addEventListener('click', closeQuestionsModal);
+
+            document.getElementById('add-question-btn').addEventListener('click', () => {
+                const list = document.getElementById('modal-questions-list');
+                const idx = list.children.length;
+                list.insertAdjacentHTML('beforeend', renderQuestionEditorRow(idx, {
+                    q: "",
+                    options: { A: "", B: "", C: "", D: "" },
+                    correct: "A",
+                    prize: `$${(idx + 1) * 100},000`
+                }));
+            });
+
+            document.getElementById('save-questions-btn').addEventListener('click', async () => {
+                const updatedList = [];
+                const rows = document.querySelectorAll('.question-edit-row');
+                rows.forEach((row, idx) => {
+                    const qVal = row.querySelector('.q-text-input').value.trim();
+                    const optA = row.querySelector('.opt-A-input').value.trim();
+                    const optB = row.querySelector('.opt-B-input').value.trim();
+                    const optC = row.querySelector('.opt-C-input').value.trim();
+                    const optD = row.querySelector('.opt-D-input').value.trim();
+                    const correctVal = row.querySelector('.correct-select').value;
+                    const prizeVal = row.querySelector('.prize-input').value.trim();
+
+                    if (qVal && optA && optB) {
+                        updatedList.push({
+                            q: qVal,
+                            options: { A: optA, B: optB, C: optC || "—", D: optD || "—" },
+                            correct: correctVal,
+                            prize: prizeVal || `$${(idx + 1) * 100},000`
+                        });
+                    }
+                });
+
+                if (updatedList.length > 0) {
+                    QUESTIONS = updatedList;
+                    gameState.currentQuestion = 0;
+                    gameState.isRevealed = false;
+                    gameState.gameStarted = false;
+                    gameState.gameOver = false;
+                    try {
+                        await setDoc(QUESTIONS_DOC, { list: QUESTIONS });
+                        await setDoc(GAME_STATE_DOC, { 
+                            currentQuestion: 0, 
+                            isRevealed: false, 
+                            gameStarted: false, 
+                            gameOver: false 
+                        }, { merge: true });
+                    } catch (e) {
+                        console.warn("Save questions sync warning:", e.message);
+                    }
+                    renderQuestionUI();
+                    closeQuestionsModal();
+                }
+            });
+
+            // --- Lifelines Functionality ---
+            document.getElementById('lifeline-5050').addEventListener('click', () => {
+                if (usedLifelines.fiftyFifty || gameState.isRevealed || !gameState.gameStarted) return;
+                
+                const currentQ = QUESTIONS[gameState.currentQuestion];
+                if (!currentQ) return;
+
+                const options = ['A', 'B', 'C', 'D'];
+                const incorrectOptions = options.filter(opt => opt !== currentQ.correct);
+                
+                incorrectOptions.sort(() => Math.random() - 0.5);
+                const toRemove = incorrectOptions.slice(0, 2);
+
+                toRemove.forEach(opt => {
+                    const btn = document.getElementById(`opt-${opt}`);
+                    if (btn) {
+                        btn.style.opacity = "0.2";
+                        btn.style.pointerEvents = "none";
+                        btn.querySelector('.opt-text').innerText = "— [50:50 Removed] —";
+                    }
+                });
+
+                usedLifelines.fiftyFifty = true;
+                document.getElementById('lifeline-5050').disabled = true;
+            });
+
+            document.getElementById('lifeline-audience').addEventListener('click', () => {
+                if (usedLifelines.audience || !gameState.gameStarted) return;
+
+                const tallyBox = document.getElementById('tally-box');
+                if (tallyBox) {
+                    tallyBox.scrollIntoView({ behavior: 'smooth' });
+                    tallyBox.classList.add('ring-2', 'ring-amber-400');
+                    setTimeout(() => tallyBox.classList.remove('ring-2', 'ring-amber-400'), 3000);
+                }
+
+                usedLifelines.audience = true;
+                document.getElementById('lifeline-audience').disabled = true;
+            });
+
+            document.getElementById('lifeline-phone').addEventListener('click', () => {
+                if (usedLifelines.phone || !gameState.gameStarted) return;
+
+                const currentQ = QUESTIONS[gameState.currentQuestion];
+                const friendAdvice = `Your friend says: "I'm about 80% sure the answer is Option ${currentQ.correct}!"`;
+                
+                document.getElementById('lifeline-modal-title').innerText = "Phone a Friend";
+                document.getElementById('lifeline-modal-body').innerText = friendAdvice;
+                document.getElementById('lifeline-modal').classList.remove('hidden');
+
+                usedLifelines.phone = true;
+                document.getElementById('lifeline-phone').disabled = true;
+            });
+
+            document.getElementById('close-lifeline-modal').addEventListener('click', () => {
+                document.getElementById('lifeline-modal').classList.add('hidden');
+            });
+
+            document.getElementById('reset-game-btn').addEventListener('click', async () => {
+                if (!isHost) return;
+                gameState.currentQuestion = 0;
+                gameState.isRevealed = false;
+                gameState.gameStarted = false;
+                gameState.gameOver = false;
+                gameState.startTime = null;
+                gameState.isHostActive = false;
+
+                usedLifelines = { fiftyFifty: false, audience: false, phone: false };
+                document.querySelectorAll('.lifeline-btn').forEach(btn => btn.disabled = false);
+
+                try {
+                    const querySnap = await getDocs(PLAYERS_COLLECTION);
+                    querySnap.forEach(async (pDoc) => {
+                        await deleteDoc(doc(PLAYERS_COLLECTION, pDoc.id));
+                    });
+                    await setDoc(GAME_STATE_DOC, { 
+                        currentQuestion: 0, 
+                        isRevealed: false, 
+                        gameStarted: false, 
+                        gameOver: false,
+                        startTime: null,
+                        isHostActive: false
+                    });
+                } catch (e) {
+                    console.warn("Reset quiz sync warning:", e.message);
+                }
+                playersData = {};
+                renderQuestionUI();
+                renderLeaderboardAndTally();
+            });
+        }
+
+        function renderQuestionEditorRow(idx, q) {
+            return `
+                <div class="question-edit-row bg-slate-900/90 p-4 rounded-xl border border-slate-700 text-xs space-y-3 relative">
+                    <div class="flex justify-between items-center font-bold text-amber-400">
+                        <span>Question #${idx + 1}</span>
+                        <div class="flex items-center gap-2">
+                            <label class="text-slate-400 font-normal">Prize Label:</label>
+                            <input type="text" value="${q.prize || ''}" class="prize-input bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24 text-white">
+                        </div>
+                    </div>
+                    <div>
+                        <input type="text" value="${q.q || ''}" placeholder="Enter Question text..." class="q-text-input w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white font-medium focus:border-amber-400 focus:outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" value="${q.options?.A || ''}" placeholder="Option A" class="opt-A-input bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-white">
+                        <input type="text" value="${q.options?.B || ''}" placeholder="Option B" class="opt-B-input bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-white">
+                        <input type="text" value="${q.options?.C || ''}" placeholder="Option C" class="opt-C-input bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-white">
+                        <input type="text" value="${q.options?.D || ''}" placeholder="Option D" class="opt-D-input bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-white">
+                    </div>
+                    <div class="flex items-center gap-3 pt-1">
+                        <span class="text-slate-300 font-semibold">Correct Answer:</span>
+                        <select class="correct-select bg-amber-500 text-slate-950 font-bold rounded px-2 py-1 cursor-pointer">
+                            <option value="A" ${q.correct === 'A' ? 'selected' : ''}>A</option>
+                            <option value="B" ${q.correct === 'B' ? 'selected' : ''}>B</option>
+                            <option value="C" ${q.correct === 'C' ? 'selected' : ''}>C</option>
+                            <option value="D" ${q.correct === 'D' ? 'selected' : ''}>D</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openQuestionsModal() {
+            const list = document.getElementById('modal-questions-list');
+            list.innerHTML = '';
+            QUESTIONS.forEach((q, i) => {
+                list.innerHTML += renderQuestionEditorRow(i, q);
+            });
+            document.getElementById('questions-modal').classList.remove('hidden');
+        }
+
+        function closeQuestionsModal() {
+            document.getElementById('questions-modal').classList.add('hidden');
+        }
+
+        async function joinGame(asHost) {
+            const inputName = document.getElementById('username-input').value.trim();
+            playerName = inputName || (asHost ? "Host" : "Player " + Math.floor(Math.random() * 100));
+            isHost = asHost;
+
+            document.getElementById('display-name').innerText = playerName;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('user-info-bar').classList.remove('hidden');
+
+            if (isHost) {
+                try {
+                    await setDoc(GAME_STATE_DOC, { isHostActive: true }, { merge: true });
+                } catch (e) {
+                    console.warn("Set host active warning:", e.message);
+                }
+            } else {
+                const myPlayerData = {
+                    name: playerName,
+                    isHost: false,
+                    score: playersData[userId]?.score || 0,
+                    answers: playersData[userId]?.answers || {}
+                };
+
+                playersData[userId] = myPlayerData;
+
+                try {
+                    const playerRef = doc(db, 'players', userId);
+                    await setDoc(playerRef, myPlayerData, { merge: true });
+                } catch (err) {
+                    console.warn("Join player Firestore write warning:", err.message);
+                }
+            }
+
+            updateHostUI();
+        }
+
+        function updateHostUI() {
+            const hostControls = document.getElementById('host-controls');
+            const hostLobbyPrompt = document.getElementById('host-lobby-prompt');
+
+            if (isHost) {
+                hostControls.classList.remove('hidden');
+                hostLobbyPrompt.classList.remove('hidden');
+            } else {
+                hostControls.classList.add('hidden');
+                hostLobbyPrompt.classList.add('hidden');
+            }
+            renderQuestionUI();
+        }
+
+        function listenToRoomUpdates() {
+            try {
+                onSnapshot(QUESTIONS_DOC, (snap) => {
+                    if (snap.exists() && snap.data().list?.length) {
+                        QUESTIONS = snap.data().list;
+                        renderQuestionUI();
+                    }
+                }, (err) => {
+                    console.warn("Questions snapshot warning:", err.message);
+                });
+
+                onSnapshot(GAME_STATE_DOC, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const newRemoteState = docSnap.data();
+                        if (newRemoteState.currentQuestion !== gameState.currentQuestion) {
+                            selectedOption = null;
+                        }
+                        gameState = {
+                            currentQuestion: newRemoteState.currentQuestion ?? 0,
+                            isRevealed: !!newRemoteState.isRevealed,
+                            gameStarted: !!newRemoteState.gameStarted,
+                            gameOver: !!newRemoteState.gameOver,
+                            startTime: newRemoteState.startTime ?? null,
+                            isHostActive: !!newRemoteState.isHostActive
+                        };
+
+                        // Disable host button on login screen if host is already active
+                        const hostBtn = document.getElementById('join-host-btn');
+                        const hostLabel = document.getElementById('host-btn-label');
+                        if (hostBtn && hostLabel) {
+                            if (gameState.isHostActive && !isHost) {
+                                hostBtn.disabled = true;
+                                hostBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                                hostLabel.innerText = "Host Already Active";
+                            } else {
+                                hostBtn.disabled = false;
+                                hostBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                                hostLabel.innerText = "Host/Present Game";
+                            }
+                        }
+                    }
+                    renderQuestionUI();
+                    renderLeaderboardAndTally();
+                }, (err) => {
+                    console.warn("Game State snapshot warning:", err.message);
+                });
+
+                onSnapshot(PLAYERS_COLLECTION, (snapshot) => {
+                    const updatedPlayers = {};
+                    snapshot.forEach(docSnap => {
+                        updatedPlayers[docSnap.id] = docSnap.data();
+                    });
+                    playersData = updatedPlayers;
+                    renderLeaderboardAndTally();
+                }, (err) => {
+                    console.warn("Players snapshot warning:", err.message);
+                });
+            } catch (err) {
+                console.warn("Firebase listener exception:", err.message);
+            }
+        }
+
+        window.removePlayer = async function(pid) {
+            try {
+                await deleteDoc(doc(db, 'players', pid));
+            } catch (e) {
+                console.warn("Remove player warning:", e.message);
+            }
+        };
+
+        function renderWinnerSection() {
+            const activePlayers = Object.entries(playersData)
+                .map(([id, data]) => ({ id, ...data }))
+                .filter(p => !p.isHost)
+                .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+            const winner = activePlayers[0];
+            document.getElementById('winner-name').innerText = winner ? winner.name : "No Players";
+            document.getElementById('winner-prize').innerText = "$1,000,000 Monopoly Money";
+
+            const podiumList = document.getElementById('winner-podium-list');
+            podiumList.innerHTML = '';
+
+            activePlayers.forEach((player, idx) => {
+                let badge = `<span class="font-bold text-slate-400">#${idx + 1}</span>`;
+                if (idx === 0) badge = `<i class="fa-solid fa-crown text-amber-400 text-base"></i>`;
+                else if (idx === 1) badge = `<i class="fa-solid fa-medal text-slate-300 text-base"></i>`;
+                else if (idx === 2) badge = `<i class="fa-solid fa-award text-amber-700 text-base"></i>`;
+
+                podiumList.innerHTML += `
+                    <div class="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            ${badge}
+                            <span class="font-bold text-white text-sm">${player.name}</span>
+                        </div>
+                        <span class="font-mono text-amber-400 font-bold text-sm">${player.score || 0} pts</span>
+                    </div>
+                `;
+            });
+        }
+
+        function renderLeaderboardAndTally() {
+            const listEl = document.getElementById('leaderboard-list');
+            const playerCountEl = document.getElementById('player-count');
+            const lobbyCountEl = document.getElementById('lobby-player-count');
+
+            const activePlayers = Object.entries(playersData)
+                .map(([id, data]) => ({ id, ...data }))
+                .filter(p => !p.isHost)
+                .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+            playerCountEl.innerText = `${activePlayers.length} Joined`;
+            if (lobbyCountEl) lobbyCountEl.innerText = activePlayers.length;
+
+            if (activePlayers.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">Waiting for team members...</p>`;
+            } else {
+                listEl.innerHTML = '';
+                activePlayers.forEach((p) => {
+                    const hasAnswered = p.answers && p.answers[`q${gameState.currentQuestion}`];
+                    const isMe = p.id === userId;
+
+                    let statusBadge = '';
+                    if (gameState.gameStarted && !gameState.gameOver) {
+                        if (hasAnswered) {
+                            statusBadge = `<span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">Locked</span>`;
+                        } else {
+                            statusBadge = `<span class="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold">Thinking</span>`;
+                        }
+                    }
+
+                    listEl.innerHTML += `
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/80 border ${isMe ? 'border-amber-400/80' : 'border-slate-800'} text-xs">
+                            <div class="flex items-center gap-2 truncate">
+                                <span class="font-bold text-white truncate">${p.name} ${isMe ? '<span class="text-amber-400 text-[10px]">(You)</span>' : ''}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${statusBadge}
+                                <span class="font-mono text-amber-400 font-bold">${p.score || 0} pts</span>
+                                ${isHost ? `<button onclick="removePlayer('${p.id}')" class="text-red-400 hover:text-red-300 px-1" title="Remove Player">&times;</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Calculate Tallies for Option A, B, C, D
+            const counts = { A: 0, B: 0, C: 0, D: 0 };
+            let totalLocked = 0;
+
+            activePlayers.forEach(p => {
+                const ans = p.answers ? p.answers[`q${gameState.currentQuestion}`] : null;
+                if (ans && counts[ans] !== undefined) {
+                    counts[ans]++;
+                    totalLocked++;
+                }
+            });
+
+            document.getElementById('tally-A').innerText = counts.A;
+            document.getElementById('tally-B').innerText = counts.B;
+            document.getElementById('tally-C').innerText = counts.C;
+            document.getElementById('tally-D').innerText = counts.D;
+            document.getElementById('locked-count-text').innerText = `${totalLocked}/${activePlayers.length} Locked In`;
+        }
+
+        function renderQuestionUI() {
+            const lobbyCard = document.getElementById('lobby-card');
+            const activeQuizView = document.getElementById('active-quiz-view');
+            const winnerScreen = document.getElementById('winner-screen');
+
+            if (gameState.gameOver && gameState.isRevealed) {
+                lobbyCard.classList.add('hidden');
+                activeQuizView.classList.add('hidden');
+                winnerScreen.classList.remove('hidden');
+                renderWinnerSection();
+                renderLadder(QUESTIONS.length - 1);
+                return;
+            } else {
+                winnerScreen.classList.add('hidden');
+            }
+
+            if (!gameState.gameStarted) {
+                lobbyCard.classList.remove('hidden');
+                activeQuizView.classList.add('hidden');
+                document.getElementById('host-q-status').innerText = "Lobby Waiting Room";
+                renderLadder(0);
+                return;
+            }
+
+            lobbyCard.classList.add('hidden');
+            activeQuizView.classList.remove('hidden');
+
+            if (gameState.currentQuestion >= QUESTIONS.length) {
+                gameState.currentQuestion = 0;
+            }
+
+            const qData = QUESTIONS[gameState.currentQuestion] || QUESTIONS[0];
+            document.getElementById('question-text').innerText = qData.q;
+            document.getElementById('host-q-status').innerText = `Question ${gameState.currentQuestion + 1} of ${QUESTIONS.length}`;
+
+            const myCurrentAns = userId ? playersData[userId]?.answers?.[`q${gameState.currentQuestion}`] : null;
+
+            const options = ['A', 'B', 'C', 'D'];
+            options.forEach(opt => {
+                const btn = document.getElementById(`opt-${opt}`);
+                const optTextSpan = btn.querySelector('.opt-text');
+                
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+                optTextSpan.innerText = qData.options[opt];
+
+                btn.className = 'option-btn hexagon-btn p-4 text-left font-semibold text-sm md:text-base flex items-center gap-3';
+
+                if (myCurrentAns === opt || (!myCurrentAns && selectedOption === opt)) {
+                    btn.classList.add('selected');
+                }
+
+                if (gameState.isRevealed) {
+                    if (opt === qData.correct) {
+                        btn.classList.add('correct');
+                    } else if (myCurrentAns === opt) {
+                        btn.classList.add('wrong');
+                    }
+                }
+            });
+
+            const lockBtn = document.getElementById('lock-in-btn');
+
+            if (myCurrentAns) {
+                lockBtn.disabled = true;
+                lockBtn.innerHTML = `<i class="fa-solid fa-check"></i> ANSWER LOCKED`;
+            } else {
+                lockBtn.disabled = !selectedOption || gameState.isRevealed;
+                lockBtn.innerHTML = `<i class="fa-solid fa-lock"></i> LOCK IN ANSWER`;
+            }
+
+            renderLadder(gameState.currentQuestion);
+        }
+
+        initAuth();
+    </script>
+</body>
+</html>
